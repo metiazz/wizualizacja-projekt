@@ -39,7 +39,7 @@ for (package in packages) {
 
 # Wstęp
 Poniższy tekst podejmuje się analizy klientów kart kredytowych i oceny ich ryzyka. Projekt został wzbogacony o elementy shiny i dla optymalnego komfortu powinien być oglądany na stronie projektu:
-[Link do strony](34.125.163.182:8080)
+[Link do strony](http://34.125.163.182:8080)
 
 Powodem takiego rozwiązania jest fakt, że shinyapps nie akceptuje dokumentów wzbogaconych o shiny (quarto).
 
