@@ -342,6 +342,8 @@ Postawowe wykresy zmiennych opisujących cechy klientów nie są bardzo interesu
 ## Profil klienta ze względu na poziom ryzyka
 
 Poniższy wykres prezentuje profil klienta ze względu na nowo stworzone zmienne ryzyka. Wykres ma możliwość pokazania wartości absolutnych, jak i wartości procentowych udziałów zmiennej ryzyka. Dzięki temu można łatwiej werfyikować proporcję złych i dobrych klientów w ramach poszczególnych zmiennych.
+
+
 ::: {layout-ncol="3"}
 ```{r}
 vars <- setdiff(names(data), c("ID", "isBad_3", "isBad_6", "isBad_12", "isBad_ever", "isBad"))
