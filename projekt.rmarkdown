@@ -26,6 +26,7 @@ body {
 text-align: justify}
 </style>
 ```
+
 ```{r setup, include=FALSE}
 # instalacja/załadowanie potrzebnych pakietów
 packages <- c("tidyverse", "knitr", "dplyr", "tidyr", "ggplot2", "shiny", "rpart", "rpart.plot", "randomForest", "ROCR", "MASS", "stargazer")
@@ -36,6 +37,7 @@ for (package in packages) {
   }
 }
 ```
+
 
 # Wstęp
 Poniższy tekst podejmuje się analizy klientów kart kredytowych i oceny ich ryzyka. Projekt został wzbogacony o elementy shiny i dla optymalnego komfortu powinien być oglądany na stronie projektu:
@@ -59,6 +61,7 @@ Analiza ma dwa główne cele i stawia dwie hipotezy badawcze. Pierwszym celem je
 
 ## Przygotowanie danych
 
+
 ```{r}
 #| context: setup
 #| eval: true
@@ -76,11 +79,13 @@ df_credit_record <- df_credit_record %>% mutate_if(is.character, as.factor)
 
 ```
 
+
 ### Krótkie podsumowanie
 
 #### Zbiór application_record
 
 Wszystkie kolumny w zbiorze danych to:
+
 
 ```{r}
 #| eval: true
@@ -97,7 +102,9 @@ cat("Po usunięciu duplikatów wymiary zbioru to: ")
 cat(dim(df)[1], "x", dim(df)[2], ".\n", sep = "")
 ```
 
+
 Podsumowanie brakujących wartości w zbiorze danych przedstawia się następująco:
+
 
 ```{r}
 # Podsumuj wszystkie brakujące wartości w danych
@@ -108,7 +115,9 @@ print(knitr::kable(data.frame(sapply(df, function(x) sum(is.na(x)))),
 
 ```
 
+
 Podstawowe statystyki opisowe zbioru danych dla zmiennych ilościowych i jakościowych przedstawiają się następująco:
+
 
 ```{r}
 
@@ -134,9 +143,11 @@ for (column in names(factor_vars)) {
 
 ```
 
+
 #### Zbiór credit_record
 
 Wszystkie kolumny w zbiorze danych to:
+
 
 ```{r}
 print(knitr::kable(colnames(df_credit_record), col.names = c("Nazwa kolumny"), caption = "Nazwy kolmn", align = "c"))
@@ -146,7 +157,9 @@ cat("Liczba unikatowych ID w zbiorze to: ", length(unique(df_credit_record$ID)),
 cat("Jest to liczba większa niż w pierwszym zbiorze. Będzie trzeba na to zwrócić uwagę podczas łączenia tabel.")
 ```
 
+
 Podsumowanie brakujących wartości w zbiorze danych przedstawia się następująco:
+
 
 ```{r}
 # Podsumuj wszystkie brakujące wartości w danych
@@ -156,7 +169,9 @@ kable(data.frame(sapply(df_credit_record, function(x) sum(is.na(x)))),
 
 ```
 
+
 Podstawowe statystyki opisowe zbioru danych dla zmiennych ilościowych i jakościowych przedstawiają się następująco:
+
 
 ```{r}
 
@@ -182,6 +197,7 @@ for (column in names(factor_vars)) {
 
 ```
 
+
 Zbiory nie zawierają braków danych, a wszystkie odpowiednie kolumny zostały zamienione na czynnik (ang. factor), kolejnym krokiem będzie połączenie zbiorów w jeden i stworzenie odpowiednich zmiennych oznaczających opóźnienia w spłatach.
 
 ## Połączenie zbiorów
@@ -200,6 +216,7 @@ Przed połączeniem obu zbiorów należy dostosować zbiór **credit_record** do
 -   X - brak kredytu w danym miesiącu.
 
 W celu stworzenia optymalnej zmiennej celu oznaczjącą złego klienta, została dokonana dodatkowa analiza zmiennej **TARGET** w zależności od wybranego okna obserwacji. Rozważane okna to - aktualny miesiąc, ostatnie 3 miesiące, ostatnie pół roku, ostatni rok, cała historia. Zbudowana próbka do analizy jest oparta na tym czy kiedykolwiek w takim oknie wystąpiło opóźnienie spłaty dla danego **ID**.
+
 
 ```{r}
 #| panel: sidebar
@@ -240,6 +257,7 @@ ggplot(data, aes(x = STATUS)) +
 
 ```
 
+
 W oparciu o powyższy wykres dość jasno można stwierdzić, że opóźnienia powyżej 30 dni zdarzają się bardzo sporadycznie i zbudowanie zmiennej celu na ich postawie nie ma większego sensu. W efekcie została stworzona nowa zmienna pomocnicza, która definiuje dobrych i złych klientów w sposób następujący:
 
 $isBad = \begin{cases} 1 & \text{jeśli } \text{STATUS} \in \{1, 2, 3, 4, 5\} \\ 0 & \text{w innym przypadku} \end{cases}$
@@ -253,6 +271,7 @@ Jest to niezgodne z ogólnoświatowym standardem bankowym, w którym opóźnieni
 -   $isBad\_ever$ - czy klient kiedykolwiek był w stanie default.
 
 W idealnych warunkach takie zmienne wykorzystane w modelowaniu powinny patrzeć w przyszłość, a nie w przeszłość, natomiast tylko na taką możliwość pozwalają wybrane dane.
+
 
 ```{r}
 #| warning: false
@@ -275,7 +294,9 @@ df_summarised[, -which(names(df) == "ID")] <- lapply(df_summarised[, -which(name
 
 ```
 
+
 ### Sprawdzenie ID
+
 
 ```{r}
 df_combined <- merge(x = df, y = df_summarised, by = "ID", all=FALSE)
@@ -285,7 +306,9 @@ saveRDS(df_combined, file="df_combined.Rds")
 cat("Oba zbiory zostały połączone za pomoca kolumny **ID**. Tylko klienci znajdujący się w obu początkowych zbiorach znajdują się w połaczonej tabeli. Nowy zbiór ma ", dim(df_combined)[1] ,"wierszy. Znaczne ograniczenie liczby wierszy wynika z małego pokrycia **ID** z tabeli application_record przez tabelę credit_record.")
 ```
 
+
 # Profil klienta
+
 
 ```{r}
 data <- df_combined
@@ -331,6 +354,7 @@ output$plot <- renderPlot({
 
 ```
 
+
 Postawowe wykresy zmiennych opisujących cechy klientów nie są bardzo interesujące. Parę ciekawszych wniosków ogólnych dotyczących danych:
 - Wszyscy klienci mają telefon komórkowy (ta zmienna została wykluczona z późniejszego modelowania).
 - W zbiorze jest 2 razy więcej kobiet niż mężczyzn.
@@ -345,6 +369,7 @@ Poniższy wykres prezentuje profil klienta ze względu na nowo stworzone zmienne
 
 
 ::: {layout-ncol="3"}
+
 ```{r}
 vars <- setdiff(names(data), c("ID", "isBad_3", "isBad_6", "isBad_12", "isBad_ever", "isBad"))
 selectInput('xcol', 'Zmienna', vars)
@@ -359,7 +384,9 @@ selectInput('isBad_var', 'Zmienna ryzyka', choices = c("isBad", "isBad_3", "isBa
 selectInput('type', 'Typ wykresu kolumnowego', choices = c("Wartości absolutne", "Wartości procentowe"))
 # panel: sidebar
 ```
+
 :::
+
 
 ```{r}
 #| panel: fill
@@ -403,6 +430,7 @@ output$bar_plot <- renderPlot({
 })
 
 ```
+
 Większość zmiennych zdaje się mieć podobną proporcję ryzykownych klientów w ramach grup. Posiadający samochód jednak zdają się być mniej ryzykowni od klientów, którzy samochodu nie posiadają. Parę innych obserwacji dotyczących poszczególnych w ramach swoich dziedzin:
 - Studenci są najbardziej ryzykowną grupą.
 - Ludzie z wyższą edukacją są najmniej ryzykowną grupą.
@@ -414,6 +442,7 @@ Zmienną wybraną jako zmienna celu w modelowaniu została zmienna **isBad_12**,
 
 ## Regresja logistyczna
 Modelem, który będzie służył do weryfikacji hipotez będzie prosty model regresji logistycznej. Zostały stworzone 2 modele - jeden prosty ze wszystkimi zmiennymi, drugi - model stepwise, w którym nastąpi automatyczna selekcja zmiennych na postawie kryterium AIC.
+
 ```{r}
 #| context: setup
 
@@ -448,6 +477,7 @@ stargazer(reg_full, reg_step, type = "html", single.row = TRUE,
           se = NULL)
 ```
 
+
 Wnioski z regresji:
 - Klienci posiadający samochód mają istotnie mniejsze ryzyko.
 - Rodzaj zarobków nie ma większego znaczenia o ile nie jest to emerytura, natomiast wielkość zarobków już ma. Podobnie prezentuje się podsumowanie zawodów - konkretne nie mają znaczenia, ale już czas na rynku pracy owszem.
@@ -456,6 +486,7 @@ Wnioski z regresji:
 
 ## Drzewa decyzyjne
 Kolejnym rozważanym modelem były drzewa decyzyjne. Zostały skonstruowane 3 drzewa decyzyjne o różnej wielkości (ze względu na **Complexity Parameter**).
+
 ```{r}
 #| context: setup
 
@@ -491,10 +522,12 @@ output$drzewa <- renderPlot(
   
 ```
 
+
 Drzewa decyzyjne okazały się słabym wyborem dla tego zbioru danych. Małe drzewa w ogóle nie mają podziałów.
 
 ## Porównanie wyników
 Jako ostatni etap porównano różne skonstruowane modele ze względu na własności statystyczne. Wszystkie statystki są dostępne do wględu zarówno na zbiorze treningowym, jak i testowym.
+
 ```{r}
 #| context: setup
 
@@ -573,7 +606,9 @@ output$wyniki <- function() {
   
 ```
 
+
 ### Krzywa ROC
+
 
 ```{r}
 #| panel: fill
@@ -670,6 +705,7 @@ output$auc <- function(){
   }
 }  
 ```
+
 Wszystkie modele prezentują bardzo słabą moc predykcyjną, jednak regresja logistyczna wydaje się radzić lepiej. Wszystkie modele mają minimalnie gorsze właściwości na zbiorze testowym, jednak tam dalej ten trend się utrzymuje - regresja logistyczna jest lepszym wyborem.
 
 # Podsumowanie
