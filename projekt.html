@@ -3185,7 +3185,7 @@ text-align: justify}
 </style>
 <section id="wstęp" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Wstęp</h1>
-<p>Poniższy tekst podejmuje się analizy klientów kart kredytowych i oceny ich ryzyka. Projekt został wzbogacony o elementy shiny i dla optymalnego komfortu powinien być oglądany na stronie projektu: <a href="34.125.163.182:8080">Link do strony</a></p>
+<p>Poniższy tekst podejmuje się analizy klientów kart kredytowych i oceny ich ryzyka. Projekt został wzbogacony o elementy shiny i dla optymalnego komfortu powinien być oglądany na stronie projektu: <a href="http://34.125.163.182:8080">Link do strony</a></p>
 <p>Powodem takiego rozwiązania jest fakt, że shinyapps nie akceptuje dokumentów wzbogaconych o shiny (quarto).</p>
 <section id="źródło-danych" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="źródło-danych"><span class="header-section-number">1.1</span> Źródło danych</h2>
@@ -3954,7 +3954,7 @@ text-align: justify}
 </div>
 </div>
 <p>W oparciu o powyższy wykres dość jasno można stwierdzić, że opóźnienia powyżej 30 dni zdarzają się bardzo sporadycznie i zbudowanie zmiennej celu na ich postawie nie ma większego sensu. W efekcie została stworzona nowa zmienna pomocnicza, która definiuje dobrych i złych klientów w sposób następujący:</p>
-<p><span class="math inline">\(isBad = \begin{cases} 1 &amp; \text{if } \text{STATUS} \in \{1, 2, 3, 4, 5\} \\ 0 &amp; \text{otherwise} \end{cases}\)</span></p>
+<p><span class="math inline">\(isBad = \begin{cases} 1 &amp; \text{jeśli } \text{STATUS} \in \{1, 2, 3, 4, 5\} \\ 0 &amp; \text{w innym przypadku} \end{cases}\)</span></p>
 <p>Jest to niezgodne z ogólnoświatowym standardem bankowym, w którym opóźnienie w spłacie powyżej 90 dni oznacza wejście w stan default, jednak jak widać tylko nieznaczna część klientów ma opóźnienia &gt; 90, co może utrudnić późniejsze analizy. Zostały stworzone następujące zmienne pomocnicze:</p>
 <ul>
 <li><span class="math inline">\(isBad\)</span> - czy klient jest aktualnie w stanie default.</li>
@@ -4010,8 +4010,10 @@ text-align: justify}
 <p>Postawowe wykresy zmiennych opisujących cechy klientów nie są bardzo interesujące. Parę ciekawszych wniosków ogólnych dotyczących danych: - Wszyscy klienci mają telefon komórkowy (ta zmienna została wykluczona z późniejszego modelowania). - W zbiorze jest 2 razy więcej kobiet niż mężczyzn. - Zdecydowana większośc nie ma dzieci. - Zdecydowana większość ma średnią edukację. - Telefony domowe (zmienna <strong>FLAG_PHONE</strong>) są mało popularne w badanym zbiorze. - Zmienna dotycząca posiadania samochodu (istotna z punktu widzenia stawianych hipotez) ma relatywnie równy rozkład.</p>
 <section id="profil-klienta-ze-względu-na-poziom-ryzyka" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="profil-klienta-ze-względu-na-poziom-ryzyka"><span class="header-section-number">2.1</span> Profil klienta ze względu na poziom ryzyka</h2>
-<p>Poniższy wykres prezentuje profil klienta ze względu na nowo stworzone zmienne ryzyka. Wykres ma możliwość pokazania wartości absolutnych, jak i wartości procentowych udziałów zmiennej ryzyka. Dzięki temu można łatwiej werfyikować proporcję złych i dobrych klientów w ramach poszczególnych zmiennych. ::: {layout-ncol=“3”}</p>
-<div class="cell-output-display no-overflow-x">
+<p>Poniższy wykres prezentuje profil klienta ze względu na nowo stworzone zmienne ryzyka. Wykres ma możliwość pokazania wartości absolutnych, jak i wartości procentowych udziałów zmiennej ryzyka. Dzięki temu można łatwiej werfyikować proporcję złych i dobrych klientów w ramach poszczególnych zmiennych.</p>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="cell-output-display quarto-layout-cell no-overflow-x" style="flex-basis: 33.3%;justify-content: center;">
 <div class="form-group shiny-input-container">
 <label class="control-label" id="xcol-label" for="xcol">Zmienna</label>
 <div>
@@ -4036,7 +4038,7 @@ text-align: justify}
 </div>
 </div>
 </div>
-<div class="cell-output-display no-overflow-x">
+<div class="cell-output-display quarto-layout-cell no-overflow-x" style="flex-basis: 33.3%;justify-content: center;">
 <div class="form-group shiny-input-container">
 <label class="control-label" id="isBad_var-label" for="isBad_var">Zmienna ryzyka</label>
 <div>
@@ -4049,7 +4051,7 @@ text-align: justify}
 </div>
 </div>
 </div>
-<div class="cell-output-display no-overflow-x">
+<div class="cell-output-display quarto-layout-cell no-overflow-x" style="flex-basis: 33.3%;justify-content: center;">
 <div class="form-group shiny-input-container">
 <label class="control-label" id="type-label" for="type">Typ wykresu kolumnowego</label>
 <div>
@@ -4059,7 +4061,8 @@ text-align: justify}
 </div>
 </div>
 </div>
-<p>:::</p>
+</div>
+</div>
 <div class="panel-fill panel-grid">
 <div class="g-col-24">
 <div class="cell panel-fill">
@@ -4074,7 +4077,7 @@ text-align: justify}
 </section>
 <section id="modelowanie" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Modelowanie</h1>
-<p>Zmienną wybraną jako zmienna celu w modelowaniu została zmienna <strong>isBad_12</strong>, 12 miesięczne okna obserwacji są dość klasycznym podejściem w ryzyku kredytowym. Taki okres gwarantuje wystarczająco dużą liczbę złych klientów do analizy.</p>
+<p>Zmienną wybraną jako zmienna celu w modelowaniu została zmienna <strong>isBad_12</strong>, 12 miesięczne okna obserwacji są dość klasycznym podejściem w ryzyku kredytowym. Taki okres gwarantuje wystarczająco dużą liczbę złych klientów do analizy. Dane zostały podzielone na zbiór treningowy i testowy w stosunku 7 do 3.</p>
 <section id="regresja-logistyczna" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="regresja-logistyczna"><span class="header-section-number">3.1</span> Regresja logistyczna</h2>
 <p>Modelem, który będzie służył do weryfikacji hipotez będzie prosty model regresji logistycznej. Zostały stworzone 2 modele - jeden prosty ze wszystkimi zmiennymi, drugi - model stepwise, w którym nastąpi automatyczna selekcja zmiennych na postawie kryterium AIC.</p>
@@ -4123,24 +4126,7 @@ isBad_12
 CODE_GENDERM
 </td>
 <td>
-0.073
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.064)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.075
 </td>
 <td>
 </td>
@@ -4150,28 +4136,10 @@ CODE_GENDERM
 FLAG_OWN_CARY
 </td>
 <td>
--0.149<sup>***</sup>
+-0.134<sup>**</sup>
 </td>
 <td>
--0.142<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.057)
-</td>
-<td>
-(0.054)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-0.129<sup>**</sup>
 </td>
 </tr>
 <tr>
@@ -4179,28 +4147,10 @@ FLAG_OWN_CARY
 FLAG_OWN_REALTYY
 </td>
 <td>
--0.122<sup>**</sup>
+-0.109<sup>*</sup>
 </td>
 <td>
--0.137<sup>**</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.054)
-</td>
-<td>
-(0.053)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-0.125<sup>**</sup>
 </td>
 </tr>
 <tr>
@@ -4208,28 +4158,10 @@ FLAG_OWN_REALTYY
 CNT_CHILDREN
 </td>
 <td>
--2.114<sup>***</sup>
+-2.112<sup>***</sup>
 </td>
 <td>
--2.154<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.481)
-</td>
-<td>
-(0.479)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-2.155<sup>***</sup>
 </td>
 </tr>
 <tr>
@@ -4245,49 +4177,13 @@ AMT_INCOME_TOTAL
 </tr>
 <tr>
 <td style="text-align:left">
-</td>
-<td>
-(0.00000)
-</td>
-<td>
-(0.00000)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
 NAME_INCOME_TYPEPensioner
 </td>
 <td>
-3.173<sup>***</sup>
+2.885<sup>***</sup>
 </td>
 <td>
-3.158<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.603)
-</td>
-<td>
-(0.598)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+2.879<sup>***</sup>
 </td>
 </tr>
 <tr>
@@ -4295,28 +4191,10 @@ NAME_INCOME_TYPEPensioner
 NAME_INCOME_TYPEState servant
 </td>
 <td>
--0.045
+-0.083
 </td>
 <td>
--0.004
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.101)
-</td>
-<td>
-(0.097)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-0.034
 </td>
 </tr>
 <tr>
@@ -4324,28 +4202,10 @@ NAME_INCOME_TYPEState servant
 NAME_INCOME_TYPEStudent
 </td>
 <td>
-0.326
+-11.025
 </td>
 <td>
-0.354
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(1.060)
-</td>
-<td>
-(1.059)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-10.990
 </td>
 </tr>
 <tr>
@@ -4353,28 +4213,10 @@ NAME_INCOME_TYPEStudent
 NAME_INCOME_TYPEWorking
 </td>
 <td>
--0.110<sup>*</sup>
+-0.119<sup>*</sup>
 </td>
 <td>
--0.101<sup>*</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.062)
-</td>
-<td>
-(0.061)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-0.109<sup>*</sup>
 </td>
 </tr>
 <tr>
@@ -4382,28 +4224,10 @@ NAME_INCOME_TYPEWorking
 NAME_EDUCATION_TYPEHigher education
 </td>
 <td>
-10.738
+10.765
 </td>
 <td>
-10.843
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(133.601)
-</td>
-<td>
-(133.457)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+10.877
 </td>
 </tr>
 <tr>
@@ -4411,28 +4235,10 @@ NAME_EDUCATION_TYPEHigher education
 NAME_EDUCATION_TYPEIncomplete higher
 </td>
 <td>
-10.925
+10.928
 </td>
 <td>
-11.021
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(133.601)
-</td>
-<td>
-(133.457)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+11.033
 </td>
 </tr>
 <tr>
@@ -4440,28 +4246,10 @@ NAME_EDUCATION_TYPEIncomplete higher
 NAME_EDUCATION_TYPELower secondary
 </td>
 <td>
-10.475
+10.392
 </td>
 <td>
-10.601
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(133.601)
-</td>
-<td>
-(133.458)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+10.525
 </td>
 </tr>
 <tr>
@@ -4469,28 +4257,10 @@ NAME_EDUCATION_TYPELower secondary
 NAME_EDUCATION_TYPESecondary / secondary special
 </td>
 <td>
-10.887
+10.906
 </td>
 <td>
-10.998
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(133.601)
-</td>
-<td>
-(133.457)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+11.023
 </td>
 </tr>
 <tr>
@@ -4498,28 +4268,10 @@ NAME_EDUCATION_TYPESecondary / secondary special
 NAME_FAMILY_STATUSMarried
 </td>
 <td>
--0.065
+-0.049
 </td>
 <td>
--0.070
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.089)
-</td>
-<td>
-(0.088)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-0.058
 </td>
 </tr>
 <tr>
@@ -4527,28 +4279,10 @@ NAME_FAMILY_STATUSMarried
 NAME_FAMILY_STATUSSeparated
 </td>
 <td>
-2.010<sup>***</sup>
+2.061<sup>***</sup>
 </td>
 <td>
-2.032<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.498)
-</td>
-<td>
-(0.496)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+2.085<sup>***</sup>
 </td>
 </tr>
 <tr>
@@ -4556,28 +4290,10 @@ NAME_FAMILY_STATUSSeparated
 NAME_FAMILY_STATUSSingle / not married
 </td>
 <td>
-2.104<sup>***</sup>
+2.114<sup>***</sup>
 </td>
 <td>
-2.134<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.481)
-</td>
-<td>
-(0.479)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+2.147<sup>***</sup>
 </td>
 </tr>
 <tr>
@@ -4585,28 +4301,10 @@ NAME_FAMILY_STATUSSingle / not married
 NAME_FAMILY_STATUSWidow
 </td>
 <td>
-1.860<sup>***</sup>
+1.870<sup>***</sup>
 </td>
 <td>
-1.885<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.507)
-</td>
-<td>
-(0.505)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+1.897<sup>***</sup>
 </td>
 </tr>
 <tr>
@@ -4614,24 +4312,7 @@ NAME_FAMILY_STATUSWidow
 NAME_HOUSING_TYPEHouse / apartment
 </td>
 <td>
-1.024<sup>*</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.587)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.971<sup>*</sup>
 </td>
 <td>
 </td>
@@ -4641,24 +4322,7 @@ NAME_HOUSING_TYPEHouse / apartment
 NAME_HOUSING_TYPEMunicipal apartment
 </td>
 <td>
-0.949
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.604)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.900
 </td>
 <td>
 </td>
@@ -4668,24 +4332,7 @@ NAME_HOUSING_TYPEMunicipal apartment
 NAME_HOUSING_TYPEOffice apartment
 </td>
 <td>
-1.388<sup>**</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.637)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+1.398<sup>**</sup>
 </td>
 <td>
 </td>
@@ -4695,24 +4342,7 @@ NAME_HOUSING_TYPEOffice apartment
 NAME_HOUSING_TYPERented apartment
 </td>
 <td>
-1.153<sup>*</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.613)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+1.086<sup>*</sup>
 </td>
 <td>
 </td>
@@ -4722,24 +4352,7 @@ NAME_HOUSING_TYPERented apartment
 NAME_HOUSING_TYPEWith parents
 </td>
 <td>
-1.170<sup>**</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.595)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+1.144<sup>*</sup>
 </td>
 <td>
 </td>
@@ -4757,24 +4370,6 @@ DAYS_BIRTH
 </tr>
 <tr>
 <td style="text-align:left">
-</td>
-<td>
-(0.00001)
-</td>
-<td>
-(0.00001)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
 DAYS_EMPLOYED
 </td>
 <td>
@@ -4786,49 +4381,13 @@ DAYS_EMPLOYED
 </tr>
 <tr>
 <td style="text-align:left">
-</td>
-<td>
-(0.00000)
-</td>
-<td>
-(0.00000)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
 FLAG_WORK_PHONE1
 </td>
 <td>
--0.094
+-0.123<sup>*</sup>
 </td>
 <td>
--0.105<sup>*</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.067)
-</td>
-<td>
-(0.063)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-0.129<sup>**</sup>
 </td>
 </tr>
 <tr>
@@ -4836,24 +4395,7 @@ FLAG_WORK_PHONE1
 FLAG_PHONE1
 </td>
 <td>
--0.019
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.058)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+-0.004
 </td>
 <td>
 </td>
@@ -4863,28 +4405,10 @@ FLAG_PHONE1
 FLAG_EMAIL1
 </td>
 <td>
-0.203<sup>**</sup>
+0.207<sup>**</sup>
 </td>
 <td>
-0.204<sup>**</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.080)
-</td>
-<td>
-(0.080)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+0.205<sup>**</sup>
 </td>
 </tr>
 <tr>
@@ -4892,24 +4416,7 @@ FLAG_EMAIL1
 OCCUPATION_TYPEAccountants
 </td>
 <td>
--0.017
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.161)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.002
 </td>
 <td>
 </td>
@@ -4919,24 +4426,7 @@ OCCUPATION_TYPEAccountants
 OCCUPATION_TYPECleaning staff
 </td>
 <td>
-0.320
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.208)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.337
 </td>
 <td>
 </td>
@@ -4946,24 +4436,7 @@ OCCUPATION_TYPECleaning staff
 OCCUPATION_TYPECooking staff
 </td>
 <td>
-0.443<sup>**</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.174)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.467<sup>***</sup>
 </td>
 <td>
 </td>
@@ -4973,24 +4446,7 @@ OCCUPATION_TYPECooking staff
 OCCUPATION_TYPECore staff
 </td>
 <td>
-0.160
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.104)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.187<sup>*</sup>
 </td>
 <td>
 </td>
@@ -5000,24 +4456,7 @@ OCCUPATION_TYPECore staff
 OCCUPATION_TYPEDrivers
 </td>
 <td>
--0.005
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.131)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+-0.020
 </td>
 <td>
 </td>
@@ -5027,24 +4466,7 @@ OCCUPATION_TYPEDrivers
 OCCUPATION_TYPEHigh skill tech staff
 </td>
 <td>
-0.221
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.137)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.197
 </td>
 <td>
 </td>
@@ -5054,24 +4476,7 @@ OCCUPATION_TYPEHigh skill tech staff
 OCCUPATION_TYPEHR staff
 </td>
 <td>
-1.029<sup>***</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.354)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+1.167<sup>***</sup>
 </td>
 <td>
 </td>
@@ -5081,24 +4486,7 @@ OCCUPATION_TYPEHR staff
 OCCUPATION_TYPEIT staff
 </td>
 <td>
-0.701
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.445)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.546
 </td>
 <td>
 </td>
@@ -5108,24 +4496,7 @@ OCCUPATION_TYPEIT staff
 OCCUPATION_TYPELaborers
 </td>
 <td>
-0.128
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.093)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.135
 </td>
 <td>
 </td>
@@ -5135,24 +4506,7 @@ OCCUPATION_TYPELaborers
 OCCUPATION_TYPELow-skill Laborers
 </td>
 <td>
-0.420
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.328)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.469
 </td>
 <td>
 </td>
@@ -5162,24 +4516,7 @@ OCCUPATION_TYPELow-skill Laborers
 OCCUPATION_TYPEManagers
 </td>
 <td>
-0.193<sup>*</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.110)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.184
 </td>
 <td>
 </td>
@@ -5189,24 +4526,7 @@ OCCUPATION_TYPEManagers
 OCCUPATION_TYPEMedicine staff
 </td>
 <td>
-0.252<sup>*</sup>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.150)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.266<sup>*</sup>
 </td>
 <td>
 </td>
@@ -5216,24 +4536,7 @@ OCCUPATION_TYPEMedicine staff
 OCCUPATION_TYPEPrivate service staff
 </td>
 <td>
--0.505
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.348)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+-0.586
 </td>
 <td>
 </td>
@@ -5243,24 +4546,7 @@ OCCUPATION_TYPEPrivate service staff
 OCCUPATION_TYPERealty agents
 </td>
 <td>
-0.397
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.437)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.307
 </td>
 <td>
 </td>
@@ -5270,24 +4556,7 @@ OCCUPATION_TYPERealty agents
 OCCUPATION_TYPESales staff
 </td>
 <td>
-0.007
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.109)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.005
 </td>
 <td>
 </td>
@@ -5297,24 +4566,7 @@ OCCUPATION_TYPESales staff
 OCCUPATION_TYPESecretaries
 </td>
 <td>
-0.426
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.339)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.376
 </td>
 <td>
 </td>
@@ -5324,24 +4576,7 @@ OCCUPATION_TYPESecretaries
 OCCUPATION_TYPESecurity staff
 </td>
 <td>
-0.262
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.197)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.305
 </td>
 <td>
 </td>
@@ -5351,24 +4586,7 @@ OCCUPATION_TYPESecurity staff
 OCCUPATION_TYPEWaiters/barmen staff
 </td>
 <td>
-0.245
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.339)
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
+0.353
 </td>
 <td>
 </td>
@@ -5378,28 +4596,10 @@ OCCUPATION_TYPEWaiters/barmen staff
 CNT_FAM_MEMBERS
 </td>
 <td>
-2.102<sup>***</sup>
+2.104<sup>***</sup>
 </td>
 <td>
-2.137<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.479)
-</td>
-<td>
-(0.477)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+2.143<sup>***</sup>
 </td>
 </tr>
 <tr>
@@ -5407,28 +4607,10 @@ CNT_FAM_MEMBERS
 Constant
 </td>
 <td>
--18.241
+-18.237
 </td>
 <td>
--17.217
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(133.606)
-</td>
-<td>
-(133.461)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
+-17.265
 </td>
 </tr>
 <tr>
@@ -5440,10 +4622,10 @@ Constant
 Observations
 </td>
 <td>
-27,410
+25,591
 </td>
 <td>
-27,410
+25,591
 </td>
 </tr>
 <tr>
@@ -5451,10 +4633,10 @@ Observations
 Log Likelihood
 </td>
 <td>
--6,476.869
+-6,082.103
 </td>
 <td>
--6,496.554
+-6,102.805
 </td>
 </tr>
 <tr>
@@ -5462,10 +4644,10 @@ Log Likelihood
 Akaike Inf. Crit.
 </td>
 <td>
-13,047.740
+12,258.210
 </td>
 <td>
-13,037.110
+12,249.610
 </td>
 </tr>
 <tr>
@@ -5684,7 +4866,7 @@ dane <- data %>%
   dplyr::select(-ID, -isBad_3, -isBad_6, -isBad_ever, -isBad, -FLAG_MOBIL)
 
 set.seed(3)
-train_proportion <- 0.75
+train_proportion <- 0.7
 train_index <- runif(nrow(dane)) < train_proportion
 train <- dane[train_index,]
 test <- dane[!train_index,]

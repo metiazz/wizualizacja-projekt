@@ -48,7 +48,7 @@ Powodem takiego rozwiązania jest fakt, że shinyapps nie akceptuje dokumentów 
 Dane opisujące dane kart kredytowych pochodzą ze zbioru [link do kaggle](https://www.kaggle.com/datasets/rikdifos/credit-card-approval-prediction?select=application_record.csv). Składają się z 2 plików płaskich:
 
 -   application_record.csv - tabela z danymi dotyczącymi danych aplikacyjnych klienta (18 kolumn, jeden okres, jeden wiersz per klient).
--   credit_record.csv - tabela z historycznymi zaległościami w spłatach klienta (3 kolumny, 60 różnych okresów, x wierszy).
+-   credit_record.csv - tabela z historycznymi zaległościami w spłatach klienta (3 kolumny, 60 różnych okresów,1 048 575 wierszy).
 
 ## Cel
 
