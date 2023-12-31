@@ -242,7 +242,7 @@ ggplot(data, aes(x = STATUS)) +
 
 W oparciu o powyższy wykres dość jasno można stwierdzić, że opóźnienia powyżej 30 dni zdarzają się bardzo sporadycznie i zbudowanie zmiennej celu na ich postawie nie ma większego sensu. W efekcie została stworzona nowa zmienna pomocnicza, która definiuje dobrych i złych klientów w sposób następujący:
 
-$isBad = \begin{cases} 1 & \text{if } \text{STATUS} \in \{1, 2, 3, 4, 5\} \\ 0 & \text{otherwise} \end{cases}$
+$isBad = \begin{cases} 1 & \text{jeśli } \text{STATUS} \in \{1, 2, 3, 4, 5\} \\ 0 & \text{w innym przypadku} \end{cases}$
 
 Jest to niezgodne z ogólnoświatowym standardem bankowym, w którym opóźnienie w spłacie powyżej 90 dni oznacza wejście w stan default, jednak jak widać tylko nieznaczna część klientów ma opóźnienia \> 90, co może utrudnić późniejsze analizy. Zostały stworzone następujące zmienne pomocnicze:
 
