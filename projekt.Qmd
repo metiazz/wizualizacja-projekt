@@ -1,0 +1,669 @@
+---
+title: "Analiza klientów kart kredytowych"
+author: "Mateusz Waszkiewicz"
+server: shiny
+format:
+  html:
+    smooth-scroll: true
+    embed-resources: true
+    fontcolor: black
+    toc-depth: 3
+    number-sections: true
+editor: visual
+title-block-banner: "#0074813b"
+page-layout: article
+css: styles.css
+
+number-sections: true
+execute:
+  echo: false
+  output: asis
+---
+
+```{=html}
+<style>
+body {
+text-align: justify}
+</style>
+```
+```{r setup, include=FALSE}
+# instalacja/załadowanie potrzebnych pakietów
+packages <- c("tidyverse", "knitr", "dplyr", "tidyr", "ggplot2", "shiny", "rpart", "rpart.plot", "randomForest", "ROCR", "MASS", "stargazer")
+for (package in packages) {
+  if (!require(package, character.only = TRUE)) {
+    install.packages(package)
+    library(package, character.only = TRUE)
+  }
+}
+```
+
+# Wstęp
+Poniższy tekst podejmuje się analizy klientów kart kredytowych i oceny ich ryzyka. Projekt został wzbogacony o elementy shiny i dla optymalnego komfortu powinien być oglądany na stronie projektu:
+[Link do strony](34.125.163.182:8080)
+
+Powodem takiego rozwiązania jest fakt, że shinyapps nie akceptuje dokumentów wzbogaconych o shiny (quarto).
+
+## Źródło danych
+
+Dane opisujące dane kart kredytowych pochodzą ze zbioru [link do kaggle](https://www.kaggle.com/datasets/rikdifos/credit-card-approval-prediction?select=application_record.csv). Składają się z 2 plików płaskich:
+
+-   application_record.csv - tabela z danymi dotyczącymi danych aplikacyjnych klienta (18 kolumn, jeden okres, jeden wiersz per klient).
+-   credit_record.csv - tabela z historycznymi zaległościami w spłatach klienta (3 kolumny, 60 różnych okresów, x wierszy).
+
+## Cel
+
+Analiza ma dwa główne cele i stawia dwie hipotezy badawcze. Pierwszym celem jest analiza i zbudowanie profilu klienta - określenie jego podstawowych cech i zależności między cechami. Przestawienie tych cech w zależności od poziomu ryzyka braku terminowej spłaty karty. Drugim celem jest zbudowanie modelu predykcyjnego, który by rozróżniał dobrych i złych klientów na podstawie zarówno jego cech aplikacyjnych, jak i historii spłat. W analizie stawiane są dwie hipotezy:
+
+-   Klienci o wyższych zarobkach są bardziej terminowi w spłatach.
+-   Klienci posiadający samochód są bardziej terminowi w spłatach.
+
+## Przygotowanie danych
+
+```{r}
+#| context: setup
+#| eval: true
+# Wczytanie danych
+df <- read.csv('application_record.csv')
+df_credit_record <- read.csv('credit_record.csv')
+
+# Zmiana wszystkich kolumn typu string na typ factor i kolumn z FLAG w nazwie
+df <- df %>%
+  mutate_if(function(x) is.character(x), as.factor) %>%
+  mutate_if(grepl("FLAG", names(df)), as.factor)
+
+
+df_credit_record <- df_credit_record %>% mutate_if(is.character, as.factor)
+
+```
+
+### Krótkie podsumowanie
+
+#### Zbiór application_record
+
+Wszystkie kolumny w zbiorze danych to:
+
+```{r}
+#| eval: true
+print(knitr::kable(colnames(df), col.names = c("Nazwa kolumny"), caption = "Lista kolumn", align = "c"))
+cat("\n Wymiary zbioru to: ")
+cat(dim(df)[1], "x", dim(df)[2], ".\n", sep = "")
+cat("Liczba unikatowych ID w zbiorze to: ", length(unique(df$ID)), ".\n", sep ="")
+
+# Wyrzucenie wszystich ID, które mają duplikaty
+duplicated_rows <- df[duplicated(df$ID), ]
+df <- df[!df$ID %in% duplicated_rows$ID, ]
+cat("\nLiczba unikatowych ID nie jest równa liczbie wierszy, zatem występują duplikaty. ")
+cat("Po usunięciu duplikatów wymiary zbioru to: ")
+cat(dim(df)[1], "x", dim(df)[2], ".\n", sep = "")
+```
+
+Podsumowanie brakujących wartości w zbiorze danych przedstawia się następująco:
+
+```{r}
+# Podsumuj wszystkie brakujące wartości w danych
+print(knitr::kable(data.frame(sapply(df, function(x) sum(is.na(x)))), 
+  col.names = c("Brakujące wartości"), 
+  align = "r",
+  caption = "Podsumowanie brakujących wartości"))
+
+```
+
+Podstawowe statystyki opisowe zbioru danych dla zmiennych ilościowych i jakościowych przedstawiają się następująco:
+
+```{r}
+
+# Oddziel zmienne numeryczne i jakościowe
+numeric_vars <- df %>% select_if(is.numeric)
+numeric_vars <- numeric_vars[, names(numeric_vars) != "ID"]
+
+factor_vars <- df %>% select_if(is.factor)
+
+# Statystyki podsumowujące dla zmiennych numerycznych
+summary_numeric <- as.data.frame(apply(numeric_vars, 2, summary))
+
+kable(summary_numeric, align = "r", caption = "Podstawowe statystyki zmiennych numerycznych", digits = 1)
+
+for (column in names(factor_vars)) {
+  cat("\n\n")
+  print(knitr::kable(as.data.frame(summary(factor_vars[[column]])), align = "r",
+    col.names = c("Liczba wystąpień"),
+    caption = sprintf("Liczby wystąpień wartości zmiennej %s", column)), format = "html")
+  cat("\n\n")
+}
+
+
+```
+
+#### Zbiór credit_record
+
+Wszystkie kolumny w zbiorze danych to:
+
+```{r}
+print(knitr::kable(colnames(df_credit_record), col.names = c("Nazwa kolumny"), caption = "Nazwy kolmn", align = "c"))
+cat("\n Wymiary zbioru to: ")
+cat(dim(df_credit_record)[1], "x", dim(df_credit_record)[2], ".\n", sep = "")
+cat("Liczba unikatowych ID w zbiorze to: ", length(unique(df_credit_record$ID)), ".\n", sep ="")
+cat("Jest to liczba większa niż w pierwszym zbiorze. Będzie trzeba na to zwrócić uwagę podczas łączenia tabel.")
+```
+
+Podsumowanie brakujących wartości w zbiorze danych przedstawia się następująco:
+
+```{r}
+# Podsumuj wszystkie brakujące wartości w danych
+kable(data.frame(sapply(df_credit_record, function(x) sum(is.na(x)))), 
+  col.names = c("Brakujące wartości"), align = "r",
+  caption = "Podsumowanie brakujących wartości", escape = FALSE)
+
+```
+
+Podstawowe statystyki opisowe zbioru danych dla zmiennych ilościowych i jakościowych przedstawiają się następująco:
+
+```{r}
+
+# Oddziel zmienne numeryczne i jakościowe
+numeric_vars <- df_credit_record[, names(df_credit_record) != "ID"]
+numeric_vars <- numeric_vars %>% select_if(is.numeric)
+
+factor_vars <- df_credit_record %>% select_if(is.factor)
+
+# Statystyki podsumowujące dla zmiennych numerycznych
+summary_numeric <- as.data.frame(apply(numeric_vars, 2, summary))
+
+kable(summary_numeric, align = "r", caption = "Podstawowe statystyki zmiennych numerycznych", digits = 2)
+
+for (column in names(factor_vars)) {
+  cat("\n\n")
+  print(knitr::kable(as.data.frame(summary(factor_vars[[column]])), align = "r",
+    col.names = c("Liczba wystąpień"),
+    caption = sprintf("Liczby wystąpień wartości zmiennej %s", column)), format = "html")
+  cat("\n\n")
+}
+
+
+```
+
+Zbiory nie zawierają braków danych, a wszystkie odpowiednie kolumny zostały zamienione na czynnik (ang. factor), kolejnym krokiem będzie połączenie zbiorów w jeden i stworzenie odpowiednich zmiennych oznaczających opóźnienia w spłatach.
+
+## Połączenie zbiorów
+
+### Stworzenie zmiennej celu
+
+Przed połączeniem obu zbiorów należy dostosować zbiór **credit_record** do formy docelowej (jeden wiersz per ID). Kolejnym krokiem będzie zatem pogrupowanie zbioru ze względu na ID, jednak aby tego dokonać najpierw należy się blżej przyjrzeć zmiennej **STATUS**. Zmienna **STATUS** jest tutaj jedną z najważniejszych, ponieważ symbolizuję opóźnienie w spłacie, jej oznaczenia są następujące:
+
+-   0 - do 29 dni opóźnienia.
+-   1 - od 30 do 59 dni opóźnienia.
+-   2 - od 60 do 89 dni opóźnienia.
+-   3 - od 90 do 119 dni opóźnienia.
+-   4 - od 120 do 149 dni opóźnienia.
+-   5 - powyżej 150 dni opóźnienia, zaległe długi albo spisanie.
+-   C - w pełni spłacone.
+-   X - brak kredytu w danym miesiącu.
+
+W celu stworzenia optymalnej zmiennej celu oznaczjącą złego klienta, została dokonana dodatkowa analiza zmiennej **TARGET** w zależności od wybranego okna obserwacji. Rozważane okna to - aktualny miesiąc, ostatnie 3 miesiące, ostatnie pół roku, ostatni rok, cała historia. Zbudowana próbka do analizy jest oparta na tym czy kiedykolwiek w takim oknie wystąpiło opóźnienie spłaty dla danego **ID**.
+
+```{r}
+#| panel: sidebar
+selectInput('period', 'Wybrany okres', choices = c("ostatni miesiąc", "ostatnie 3 miesiące", "ostatnie 6 miesięcy", "ostatnie 12 miesięcy", "kiedykolwiek"))
+```
+
+```{r}
+#| panel: fill
+plotOutput('plot_isBad')
+
+```
+
+```{r}
+#| context: server
+data <- df_credit_record
+
+slownik <- c(
+  'ostatni miesiąc' = 1,
+  'ostatnie 3 miesiące' = 3,
+  'ostatnie 6 miesięcy' = 6,
+  'ostatnie 12 miesięcy' = 12
+)
+
+output$plot_isBad <- renderPlot({
+  if (input$period != "kiedykolwiek") {
+    data <- df_credit_record %>%
+      filter(abs(MONTHS_BALANCE) < slownik[input$period])
+  } else {
+    data <- df_credit_record
+  }
+
+ggplot(data, aes(x = STATUS)) +
+  geom_bar() +
+  labs(title = paste("Wykres zmiennej STATUS w okresie:", input$period),
+        x = "Wartości zmiennej STATUS", y = "Liczność") +
+  theme_minimal()
+})
+
+```
+
+W oparciu o powyższy wykres dość jasno można stwierdzić, że opóźnienia powyżej 30 dni zdarzają się bardzo sporadycznie i zbudowanie zmiennej celu na ich postawie nie ma większego sensu. W efekcie została stworzona nowa zmienna pomocnicza, która definiuje dobrych i złych klientów w sposób następujący:
+
+$isBad = \begin{cases} 1 & \text{if } \text{STATUS} \in \{1, 2, 3, 4, 5\} \\ 0 & \text{otherwise} \end{cases}$
+
+Jest to niezgodne z ogólnoświatowym standardem bankowym, w którym opóźnienie w spłacie powyżej 90 dni oznacza wejście w stan default, jednak jak widać tylko nieznaczna część klientów ma opóźnienia \> 90, co może utrudnić późniejsze analizy. Zostały stworzone następujące zmienne pomocnicze:
+
+-   $isBad$ - czy klient jest aktualnie w stanie default.
+-   $isBad\_3$ - czy klient był w stanie default w ciągu ostatnich 3 miesięcy.
+-   $isBad\_6$ - czy klient był w stanie default w ciągu ostatnich 6 miesięcy.
+-   $isBad\_12$ - czy klient był w stanie default w ciągu ostatnich 12 miesięcy.
+-   $isBad\_ever$ - czy klient kiedykolwiek był w stanie default.
+
+W idealnych warunkach takie zmienne wykorzystane w modelowaniu powinny patrzeć w przyszłość, a nie w przeszłość, natomiast tylko na taką możliwość pozwalają wybrane dane.
+
+```{r}
+#| warning: false
+#| output: false
+
+df_credit_record$isBad <- ifelse(df_credit_record$STATUS %in% c('1', '2,', '3', '4', '5'), 1, 0)
+
+df_summarised <- df_credit_record %>%
+  arrange(ID, MONTHS_BALANCE) %>%
+  group_by(ID) %>%
+  summarise(
+    isBad_3 = max(tail(isBad, 3)),
+    isBad_6 = max(tail(isBad, 6)),
+    isBad_12 = max(tail(isBad, 12)),
+    isBad_ever = max(isBad),
+    isBad = max(tail(isBad, 1))
+  )
+
+df_summarised[, -which(names(df) == "ID")] <- lapply(df_summarised[, -which(names(df) == "ID")], function(x) {as.factor(x)})
+
+```
+
+### Sprawdzenie ID
+
+```{r}
+df_combined <- merge(x = df, y = df_summarised, by = "ID", all=FALSE)
+saveRDS(df_combined, file="df_combined.Rds")
+
+
+cat("Oba zbiory zostały połączone za pomoca kolumny **ID**. Tylko klienci znajdujący się w obu początkowych zbiorach znajdują się w połaczonej tabeli. Nowy zbiór ma ", dim(df_combined)[1] ,"wierszy. Znaczne ograniczenie liczby wierszy wynika z małego pokrycia **ID** z tabeli application_record przez tabelę credit_record.")
+```
+
+# Profil klienta
+
+```{r}
+data <- df_combined
+
+vars <- setdiff(names(data), c("ID", "isBad_3", "isBad_6", "isBad_12", "isBad_ever", "isBad"))
+selectInput('x_col', 'Zmienna', vars)
+```
+
+```{r}
+#| panel: fill
+plotOutput('plot')
+
+```
+
+```{r}
+#| context: server
+ 
+data <- readRDS("df_combined.Rds")
+
+output$plot <- renderPlot({
+  xcol <- input$x_col
+  bin_width = 20000
+  if (grepl("CNT", xcol)) {
+    bin_width = 1
+  } else if(xcol == "DAYS_BIRTH" || xcol == "DAYS_EMPLOYED") {
+    bin_width = 365
+  }
+  
+  if (is.factor(data[[xcol]])) {
+    ggplot(data, aes_string(x = xcol)) +
+      geom_bar() +
+      labs(title = paste("Wykres zmiennej", xcol),
+           x = xcol, y = "Liczność") +
+      theme_minimal()
+  } else {
+    ggplot(data, aes_string(x = xcol)) +
+      geom_histogram(binwidth = bin_width) +
+      labs(title = paste("Histogram zmiennej ilościowej", xcol),
+           x = xcol, y = "Liczność") +
+      theme_minimal()
+  }
+})
+
+```
+
+Postawowe wykresy zmiennych opisujących cechy klientów nie są bardzo interesujące. Parę ciekawszych wniosków ogólnych dotyczących danych:
+- Wszyscy klienci mają telefon komórkowy (ta zmienna została wykluczona z późniejszego modelowania).
+- W zbiorze jest 2 razy więcej kobiet niż mężczyzn.
+- Zdecydowana większośc nie ma dzieci.
+- Zdecydowana większość ma średnią edukację.
+- Telefony domowe (zmienna **FLAG_PHONE**) są mało popularne w badanym zbiorze.
+- Zmienna dotycząca posiadania samochodu (istotna z punktu widzenia stawianych hipotez) ma relatywnie równy rozkład.
+
+## Profil klienta ze względu na poziom ryzyka
+
+Poniższy wykres prezentuje profil klienta ze względu na nowo stworzone zmienne ryzyka. Wykres ma możliwość pokazania wartości absolutnych, jak i wartości procentowych udziałów zmiennej ryzyka. Dzięki temu można łatwiej werfyikować proporcję złych i dobrych klientów w ramach poszczególnych zmiennych.
+::: {layout-ncol="3"}
+```{r}
+vars <- setdiff(names(data), c("ID", "isBad_3", "isBad_6", "isBad_12", "isBad_ever", "isBad"))
+selectInput('xcol', 'Zmienna', vars)
+```
+
+```{r}
+selectInput('isBad_var', 'Zmienna ryzyka', choices = c("isBad", "isBad_3", "isBad_6", "isBad_12", "isBad_ever"))
+# panel: sidebar
+```
+
+```{r}
+selectInput('type', 'Typ wykresu kolumnowego', choices = c("Wartości absolutne", "Wartości procentowe"))
+# panel: sidebar
+```
+:::
+
+```{r}
+#| panel: fill
+plotOutput('bar_plot')
+
+```
+
+```{r}
+#| context: server
+data <- readRDS("df_combined.Rds")
+
+output$bar_plot <- renderPlot({
+
+  position <- "fill"
+  if (input$type == "Wartości absolutne") {
+    position <- "stack"
+  }
+
+  xcol <- input$xcol
+  isBad_var <- input$isBad_var
+  bin_width = 20000
+  if (grepl("CNT", xcol)) {
+    bin_width = 1
+  } else if(xcol == "DAYS_BIRTH" || xcol == "DAYS_EMPLOYED") {
+    bin_width = 365
+  }
+  
+  if (is.factor(data[[xcol]])) {
+    ggplot(data, aes_string(x = xcol, fill = isBad_var)) +
+      geom_bar(position = position) +
+      labs(title = paste("Wykres zmiennej", xcol, "w zależności od wartości", isBad_var),
+           x = xcol, y = "Liczność", fill = isBad_var) +
+      theme_minimal()
+  } else {
+    ggplot(data, aes_string(x = xcol, fill = isBad_var)) +
+      geom_histogram(position = position, binwidth = bin_width) +
+      labs(title = paste("Histogram zmiennej ilościowej", xcol, "w zależności od wartości", isBad_var),
+           x = xcol, y = "Liczność") +
+      theme_minimal()
+  }
+})
+
+```
+Większość zmiennych zdaje się mieć podobną proporcję ryzykownych klientów w ramach grup. Posiadający samochód jednak zdają się być mniej ryzykowni od klientów, którzy samochodu nie posiadają. Parę innych obserwacji dotyczących poszczególnych w ramach swoich dziedzin:
+- Studenci są najbardziej ryzykowną grupą.
+- Ludzie z wyższą edukacją są najmniej ryzykowną grupą.
+- Single są zdecydowanie najbardziej ryzykowną grupą.
+
+# Modelowanie
+
+Zmienną wybraną jako zmienna celu w modelowaniu została zmienna **isBad_12**, 12 miesięczne okna obserwacji są dość klasycznym podejściem w ryzyku kredytowym. Taki okres gwarantuje wystarczająco dużą liczbę złych klientów do analizy.
+
+## Regresja logistyczna
+Modelem, który będzie służył do weryfikacji hipotez będzie prosty model regresji logistycznej. Zostały stworzone 2 modele - jeden prosty ze wszystkimi zmiennymi, drugi - model stepwise, w którym nastąpi automatyczna selekcja zmiennych na postawie kryterium AIC.
+```{r}
+#| context: setup
+
+# stworzenie zbiorów testowych i walidacyjnych
+data <- readRDS("df_combined.Rds")
+# ograniczenie kolumn do modelowania
+dane <- data %>%
+  dplyr::select(-ID, -isBad_3, -isBad_6, -isBad_ever, -isBad, -FLAG_MOBIL)
+
+set.seed(3)
+train_proportion <- 0.75
+train_index <- runif(nrow(dane)) < train_proportion
+train <- dane[train_index,]
+test <- dane[!train_index,]
+
+```
+
+```{r}
+#| context: setup
+# regresja logistyczna
+reg_full <- glm(isBad_12 ~ ., data = train, family = binomial)
+reg_step <- reg_full %>%
+  stepAIC(trace = FALSE)
+```
+
+```{r}
+stargazer(reg_full, reg_step, type = "html")
+```
+
+Wnioski z regresji:
+- Klienci posiadający samochód mają istotnie mniejsze ryzyko.
+- Rodzaj zarobków nie ma większego znaczenia o ile nie jest to emerytura, natomiast wielkość zarobków już ma. Podobnie prezentuje się podsumowanie zawodów - konkretne nie mają znaczenia, ale już czas na rynku pracy owszem.
+- Edukacja okazała się zmienną nieistotną.
+- Zmienne związane z rodziną były isostnymi czynnikami - zarówno liczba dzieci, liczba członków rodziny, jak i status matrymonialny były istotnymi zmiennymi.
+
+## Drzewa decyzyjne
+Kolejnym rozważanym modelem były drzewa decyzyjne. Zostały skonstruowane 3 drzewa decyzyjne o różnej wielkości (ze względu na **Complexity Parameter**).
+```{r}
+#| context: setup
+
+
+# Drzewo decyzyjne
+tree_small <- rpart(isBad_12 ~ ., data = train, cp = 0.0014, method = "class")
+tree_medium <- rpart(isBad_12 ~ ., data = train, cp = 0.0012, method = "class")
+tree_big <- rpart(isBad_12 ~ ., data = train, cp = 0.001, method = "class")
+
+```
+
+```{r}
+selectInput('drzewo_size', 'Wielkość drzwa', choices = c("małe", "średnie", "duże"))
+```
+
+```{r}
+#| panel: fill
+plotOutput('drzewa')
+```
+
+```{r}
+#| context: server
+
+output$drzewa <- renderPlot(
+  if (input$drzewo_size == "małe"){
+    rpart.plot(tree_small, under = FALSE, fallen.leaves = FALSE, cex = 0.9)
+  } else if (input$drzewo_size == "średnie") {
+      rpart.plot(tree_medium, under = FALSE, fallen.leaves = FALSE, cex = 0.9)
+  } else {
+      rpart.plot(tree_big, under = FALSE, fallen.leaves = FALSE, cex = 0.9)
+  }
+)
+  
+```
+
+Drzewa decyzyjne okazały się słabym wyborem dla tego zbioru danych. Małe drzewa w ogóle nie mają podziałów.
+
+## Porównanie wyników
+Jako ostatni etap porównano różne skonstruowane modele ze względu na własności statystyczne. Wszystkie statystki są dostępne do wględu zarówno na zbiorze treningowym, jak i testowym.
+```{r}
+#| context: setup
+
+test_res <- list()
+### Regresje
+test_res[["Pełna regresja"]] <- table(ifelse(predict(reg_full, new = test, type = "response") > 0.5, 1, 0), test$isBad_12)
+test_res[["Regresja stepwise"]] <- table(ifelse(predict(reg_step, new = test, type = "response") > 0.5, 1, 0), test$isBad_12)
+### Drzewa
+test_res[["Małe drzewo"]] <- table(predict(tree_small, new = test, type = "class"), test$isBad_12)
+test_res[["Średnie drzewo"]] <- table(predict(tree_medium, new = test, type = "class"), test$isBad_12)
+test_res[["Duże drzewo"]] <- table(predict(tree_big, new = test, type = "class"), test$isBad_12)
+
+train_res <- list()
+### Regresje
+train_res[["Pełna regresja"]] <- table(ifelse(predict(reg_full, new = train, type = "response") > 0.5, 1, 0), train$isBad_12)
+train_res[["Regresja stepwise"]] <- table(ifelse(predict(reg_step, new = train, type = "response") > 0.5, 1, 0), train$isBad_12)
+### Drzewa
+train_res[["Małe drzewo"]] <- table(predict(tree_small, new = train, type = "class"), train$isBad_12)
+train_res[["Średnie drzewo"]] <- table(predict(tree_medium, new = train, type = "class"), train$isBad_12)
+train_res[["Duże drzewo"]] <- table(predict(tree_big, new = train, type = "class"), train$isBad_12)
+
+EvaluateModel <- function(classif_mx) {
+  true_positive <- classif_mx[2, 2]
+  true_negative <- classif_mx[1, 1]
+  condition_positive <- sum(classif_mx[, 2])
+  condition_negative <- sum(classif_mx[, 1])
+  predicted_positive <- sum(classif_mx[2, ])
+  predicted_negative <- sum(classif_mx[1, ])
+
+  accuracy <- (true_positive + true_negative) / sum(classif_mx)
+  MER <- 1 - accuracy # Misclassification Error Rate
+  # inaczej: MER < - (false_positive + false_positive) / sum(classif_mx)
+  precision <- true_positive / predicted_positive
+  sensitivity <- true_positive / condition_positive # inaczej - Recall / True Positive Rate (TPR)
+  specificity <- true_negative / condition_negative
+  F1 <- (2 * precision * sensitivity) / (precision + sensitivity)
+  return(list(
+    accuracy = round(accuracy, 3),
+    MER = round(MER, 3),
+    precision = round(precision, 3),
+    sensitivity = round(sensitivity, 3),
+    specificity = round(specificity, 3),
+    F1 = round(F1, 3)
+  ))
+}
+
+summary_test <- sapply(test_res, EvaluateModel)
+summary_train <- sapply(train_res, EvaluateModel)
+
+```
+
+```{r}
+selectInput('dataset', 'Zbiór do porównania wyników', choices = c("treningowy", "testowy"))
+```
+
+```{r}
+#| panel: fill
+tableOutput('wyniki')
+```
+
+```{r}
+#| context: server
+
+library("kableExtra")
+output$wyniki <- function() {
+     if (input$dataset == "treningowy"){
+     summary_train %>%
+       knitr::kable("html") %>%
+       kable_styling("striped", full_width = F)
+   } else {
+    summary_test %>%
+       knitr::kable("html") %>%
+       kable_styling("striped", full_width = F)
+   }
+}
+  
+```
+
+### Krzywa ROC
+
+```{r}
+#| panel: fill
+plotOutput('roc')
+```
+
+```{r}
+#| context: setup
+trains <- list()
+### Regresje
+trains[["reg_full"]] <- as.vector(predict(reg_full, newdata = train, type = "response"))
+trains[["reg_step"]] <- as.vector(predict(reg_step, newdata = train, type = "response"))
+### Drzewa
+trains[["tree_small"]] <- as.vector(predict(tree_small, newdata = train)[, 2])
+trains[["tree_medium"]] <- as.vector(predict(tree_medium, newdata = train)[, 2])
+trains[["tree_big"]] <- as.vector(predict(tree_big, newdata = train)[, 2])
+tests <- list()
+### Regresje
+tests[["reg_full"]] <- as.vector(predict(reg_full, newdata = test, type = "response"))
+tests[["reg_step"]] <- as.vector(predict(reg_step, newdata = test, type = "response"))
+### Drzewa
+tests[["tree_small"]] <- as.vector(predict(tree_small, newdata = test)[, 2])
+tests[["tree_medium"]] <- as.vector(predict(tree_medium, newdata = test)[, 2])
+tests[["tree_big"]] <- as.vector(predict(tree_big, newdata = test)[, 2])
+```
+
+```{r}
+#| context: server
+output$roc <- renderPlot(
+  if(input$dataset == "treningowy") {
+    for (i in 1:length(trains)) {
+      plot(performance(prediction(trains[[i]], train$isBad_12), "tpr", "fpr"), lwd = 2, colorize = F, col = i, add = ifelse(i == 1, FALSE, TRUE))
+    }
+    abline(coef = c(0, 1), lty = 2, lwd = 0.5)
+
+    legend(0.6, 0.4,
+      legend = names(trains),
+      col = 1:length(trains),
+      lty = rep(1, length(trains))
+    )
+  } else {
+    for (i in 1:length(tests)) {
+      plot(performance(prediction(tests[[i]], test$isBad_12), "tpr", "fpr"), lwd = 2, colorize = F, col = i, add = ifelse(i == 1, FALSE, TRUE))
+    }
+
+    abline(coef = c(0, 1), lty = 2, lwd = 0.5)
+
+    legend(0.6, 0.4,
+      legend = names(tests),
+      col = 1:length(tests),
+      lty = rep(1, length(tests))
+    )
+  }
+
+)
+```
+
+```{r}
+#| panel: fill
+tableOutput('auc')
+```
+
+```{r}
+#| context: server
+
+library("kableExtra")
+output$auc <- function(){
+
+  
+  if(input$dataset == "treningowy") {
+    result_df <- data.frame(Model = character(0), AUC = numeric(0))
+    for (i in 1:length(trains)) {
+      model_name <- names(trains)[i]
+      auc_value <- performance(prediction(trains[[i]], train$isBad_12), "auc")@y.values[[1]]
+    result_df <- rbind(result_df, data.frame(Model = model_name, AUC = round(auc_value, 3)))
+  }
+  
+  result_df %>%
+      knitr::kable("html") %>%
+      kable_styling("striped", full_width = F)
+
+} else {
+      result_df <- data.frame(Model = character(0), AUC = numeric(0))
+      for (i in 1:length(tests)) {
+    model_name <- names(tests)[i]
+    auc_value <- performance(prediction(tests[[i]], test$isBad_12), "auc")@y.values[[1]]
+    result_df <- rbind(result_df, data.frame(Model = model_name, AUC = round(auc_value, 3)))
+  }
+
+
+  result_df %>%
+      knitr::kable("html") %>%
+      kable_styling("striped", full_width = F)
+  }
+}  
+```
+Wszystkie modele prezentują bardzo słabą moc predykcyjną, jednak regresja logistyczna wydaje się radzić lepiej. Wszystkie modele mają minimalnie gorsze właściwości na zbiorze testowym, jednak tam dalej ten trend się utrzymuje - regresja logistyczna jest lepszym wyborem.
+
+# Podsumowanie
+Zbiór okazał się być mocno problematyczny do modelowania - brak wymiaru czasu w **aplication_record**, patrzenie wstecz zamiast do przodu w **credit_record** i mocno ograniczony iloczyn tych zbiorów po połączeniu za pomocą ID znacząco utrudniały zadanie. Nie oznacza to, że nie da się wyciągnąć żadnych wniosków - obie hipotezy zostały potwierdzone za pomocą analizy graficznej i regresji logistycznej.
